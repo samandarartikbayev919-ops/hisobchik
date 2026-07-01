@@ -176,15 +176,15 @@
       </button>
       <div class="hero-stats-row">
         <div class="hero-stat">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
           <span class="hero-stat-label">Berdim</span>
-          <span class="hero-stat-value" id="totalGave" style="color:var(--credit)">0</span>
+          <span class="hero-stat-value" id="totalGave" style="color:var(--debit)">0</span>
         </div>
         <div class="hero-stat-divider"></div>
         <div class="hero-stat">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
           <span class="hero-stat-label">Oldim</span>
-          <span class="hero-stat-value" id="totalTook" style="color:var(--debit)">0</span>
+          <span class="hero-stat-value" id="totalTook" style="color:var(--credit)">0</span>
         </div>
       </div>
     </div>
@@ -218,7 +218,7 @@
         </button>
       </div>
       <div class="type-toggle">
-        <button class="type-btn active-credit" id="typeBerdim" onclick="setTxType('berdim')">
+        <button class="type-btn active-debit" id="typeBerdim" onclick="setTxType('berdim')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
           Men berdim
         </button>
@@ -342,7 +342,7 @@
 
   // ---------- Derived data ----------
   function transactionsNet() {
-    return transactions.reduce((s, t) => s + (t.type === 'berdim' ? t.amount : -t.amount), 0);
+    return transactions.reduce((s, t) => s + (t.type === 'oldim' ? t.amount : -t.amount), 0);
   }
   function totalGaveAmt() {
     return transactions.filter(t => t.type === 'berdim').reduce((s, t) => s + t.amount, 0);
@@ -360,7 +360,7 @@
       map.get(t.person).push(t);
     }
     const arr = Array.from(map.entries()).map(([person, txs]) => {
-      const net = txs.reduce((s, t) => s + (t.type === 'berdim' ? t.amount : -t.amount), 0);
+      const net = txs.reduce((s, t) => s + (t.type === 'oldim' ? t.amount : -t.amount), 0);
       const lastDate = txs.reduce((a, t) => (t.date > a ? t.date : a), '0000-00-00');
       txs.sort((a, b) => (a.date < b.date ? 1 : -1));
       return { person, txs, net, lastDate };
@@ -424,9 +424,9 @@
     if (expanded) {
       const items = txs.map(t => {
         const iconSvg = t.type === 'berdim'
-          ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
-          : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
-        const amtColor = t.type === 'berdim' ? 'var(--credit)' : 'var(--debit)';
+          ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
+          : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
+        const amtColor = t.type === 'berdim' ? 'var(--debit)' : 'var(--credit)';
         const label = t.type === 'berdim' ? 'Berdingiz' : 'Oldingiz';
         const note = t.note ? ` <span class="tx-note">\u00B7 ${escapeHtml(t.note)}</span>` : '';
         return `<div class="tx-item">
@@ -488,8 +488,8 @@
       const isToday = iso === todayISO();
       const isSelected = iso === selectedDate;
       let dots = '';
-      if (gave > 0) dots += `<span class="cal-dot" style="background:var(--credit)"></span>`;
-      if (took > 0) dots += `<span class="cal-dot" style="background:var(--debit)"></span>`;
+      if (gave > 0) dots += `<span class="cal-dot" style="background:var(--debit)"></span>`;
+      if (took > 0) dots += `<span class="cal-dot" style="background:var(--credit)"></span>`;
       cells += `<button class="cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate('${iso}')">
         <span class="cal-cell-num">${d}</span>
         <span class="cal-dots">${dots}</span>
@@ -506,9 +506,9 @@
       } else {
         const items = dayTxs.map(t => {
           const iconSvg = t.type === 'berdim'
-            ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
-            : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
-          const amtColor = t.type === 'berdim' ? 'var(--credit)' : 'var(--debit)';
+            ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
+            : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
+          const amtColor = t.type === 'berdim' ? 'var(--debit)' : 'var(--credit)';
           const label = t.type === 'berdim' ? `${escapeHtml(t.person)}ga berdingiz` : `${escapeHtml(t.person)}dan oldingiz`;
           const note = t.note ? ` <span class="tx-note">\u00B7 ${escapeHtml(t.note)}</span>` : '';
           return `<div class="tx-item">
@@ -541,8 +541,8 @@
       <div class="cal-week-row">${weekHeader}</div>
       <div class="cal-grid">${cells}</div>
       <div class="cal-legend">
-        <span class="legend-item"><span class="cal-dot" style="background:var(--credit)"></span> Bergan kun</span>
-        <span class="legend-item"><span class="cal-dot" style="background:var(--debit)"></span> Olgan kun</span>
+        <span class="legend-item"><span class="cal-dot" style="background:var(--debit)"></span> Bergan kun</span>
+        <span class="legend-item"><span class="cal-dot" style="background:var(--credit)"></span> Olgan kun</span>
       </div>
     </div>${selectedBlock}`;
   }
@@ -577,8 +577,8 @@
   }
   function setTxType(type) {
     txType = type;
-    document.getElementById('typeBerdim').classList.toggle('active-credit', type === 'berdim');
-    document.getElementById('typeOldim').classList.toggle('active-debit', type === 'oldim');
+    document.getElementById('typeBerdim').classList.toggle('active-debit', type === 'berdim');
+    document.getElementById('typeOldim').classList.toggle('active-credit', type === 'oldim');
     document.getElementById('personLabel').textContent = type === 'berdim' ? 'Kimga berdingiz?' : 'Kimdan oldingiz?';
   }
   async function submitTransaction() {
