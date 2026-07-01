@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Hisobchi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0D12;
+    --bg-elevated: #10141B;
+    --screen: #0E1B18;
+    --screen-text: #EAF2EF;
+    --card: #141A22;
+    --divider: #232B36;
+    --text: #EAEEF3;
+    --text-dim: #8A93A3;
+    --accent-dim: #5B6472;
+    --credit: #3DDC97;
+    --debit: #FF6B5E;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+  body { padding: 18px 14px 100px; }
+  .container { max-width: 480px; margin: 0 auto; }
+
+  .hero {
+    background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%);
+    border: 1px solid var(--divider);
+    border-radius: 18px;
+    padding: 16px 18px 14px;
+  }
+  .hero-top-row { display: flex; align-items: center; justify-content: space-between; }
+  .hero-brand { display: flex; align-items: center; gap: 6px; }
+  .hero-brand svg { color: var(--accent-dim); }
+  .hero-brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 700; color: var(--accent-dim); letter-spacing: 2px; }
+  .saving-dot { font-size: 11px; color: var(--text-dim); font-style: italic; opacity: 0; transition: opacity 0.2s; }
+  .saving-dot.show { opacity: 1; }
+  .hero-label { font-size: 12.5px; color: var(--text-dim); margin: 14px 0 6px; font-weight: 500; }
+
+  .display-screen {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    background: var(--screen); border-radius: 12px; padding: 16px 16px 14px;
+    border: 1px solid rgba(61,220,151,0.15); font: inherit; color: inherit;
+  }
+  .display-top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .display-number { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 32px; line-height: 1.1; letter-spacing: 0.5px; }
+  .display-currency { font-size: 15px; font-weight: 500; color: var(--text-dim); }
+  .display-sub { font-size: 12.5px; color: var(--text-dim); margin-top: 6px; }
+
+  .hero-stats-row { display: flex; align-items: center; margin-top: 14px; padding: 10px 4px 2px; }
+  .hero-stat { flex: 1; display: flex; align-items: center; gap: 6px; }
+  .hero-stat-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+  .hero-stat-value { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13.5px; }
+  .hero-stat-divider { width: 1px; height: 20px; background: var(--divider); margin: 0 12px; }
+
+  .tab-nav { display: flex; gap: 8px; margin: 16px 0 14px; }
+  .tab-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 8px; border-radius: 10px; border: 1px solid var(--divider);
+    background: transparent; color: var(--text-dim); font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .tab-btn.active { background: var(--card); color: var(--text); border-color: #33404F; }
+
+  .card { background: var(--card); border: 1px solid var(--divider); border-radius: 14px; padding: 6px 16px; }
+  .empty-state { background: var(--card); border: 1px solid var(--divider); border-radius: 14px; padding: 36px 22px; text-align: center; }
+  .empty-text { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0; }
+  .loading-box { color: var(--text-dim); text-align: center; padding: 40px 0; font-size: 14px; }
+
+  .person-row { padding: 10px 0; }
+  .person-row + .person-row { border-top: 1px solid var(--divider); }
+  .person-header {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: none; border: none; padding: 0; cursor: pointer; text-align: left; color: inherit; font: inherit;
+  }
+  .person-avatar {
+    width: 36px; height: 36px; border-radius: 10px; background: #1C242F; color: var(--text);
+    display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 15px; flex-shrink: 0;
+  }
+  .person-name { font-size: 14.5px; font-weight: 600; color: var(--text); }
+  .person-sub { font-size: 12px; color: var(--text-dim); margin-top: 1px; }
+  .person-net { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; margin-left: auto; }
+
+  .tx-list { margin-top: 10px; padding-left: 48px; display: flex; flex-direction: column; gap: 8px; }
+  .tx-item { display: flex; align-items: center; gap: 8px; }
+  .tx-icon-wrap { width: 24px; height: 24px; border-radius: 7px; background: #1A212B; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .tx-label { font-size: 13px; color: var(--text); font-weight: 500; }
+  .tx-note { color: var(--text-dim); font-weight: 400; }
+  .tx-date { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .tx-amount { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; margin-left: auto; }
+  .tx-delete { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; opacity: 0.7; }
+
+  .fab {
+    position: fixed; right: 20px; bottom: 26px; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--credit); color: #08130F; border: none; box-shadow: 0 8px 24px rgba(61,220,151,0.35);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 20;
+  }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(4,6,9,0.65); display: flex;
+    align-items: flex-end; justify-content: center; z-index: 50;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-card {
+    width: 100%; max-width: 480px; background: var(--bg-elevated); border: 1px solid var(--divider);
+    border-radius: 18px 18px 0 0; padding: 18px 20px 26px; box-sizing: border-box; max-height: 88vh; overflow-y: auto;
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; color: var(--text); }
+  .modal-close { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; }
+
+  .type-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+  .type-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 6px; border-radius: 10px; border: 1.5px solid var(--divider); background: transparent;
+    color: var(--text-dim); font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  .type-btn.active-credit { background: rgba(61,220,151,0.1); border-color: var(--credit); color: var(--credit); }
+  .type-btn.active-debit { background: rgba(255,107,94,0.1); border-color: var(--debit); color: var(--debit); }
+
+  .form-label { display: block; font-size: 12.5px; color: var(--text-dim); margin: 12px 0 5px; font-weight: 600; }
+  .form-input {
+    width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 9px; border: 1.5px solid var(--divider);
+    background: #0C1017; font-size: 14px; color: var(--text); font-family: 'Inter', sans-serif;
+  }
+  .form-error { color: var(--debit); font-size: 12.5px; margin-top: 10px; }
+  .submit-btn {
+    width: 100%; margin-top: 18px; padding: 13px 0; border-radius: 10px; border: none;
+    background: var(--credit); color: #08130F; font-size: 14.5px; font-weight: 700; cursor: pointer;
+  }
+  .edit-balance-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin: 0 0 4px; }
+
+  .cal-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; }
+  .cal-nav-btn { background: #1A212B; border: none; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--text); cursor: pointer; }
+  .cal-month-label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15.5px; color: var(--text); }
+  .cal-week-row { display: grid; grid-template-columns: repeat(7, 1fr); padding: 4px 0; }
+  .cal-weekday { text-align: center; font-size: 11px; color: var(--text-dim); font-weight: 600; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding-bottom: 8px; }
+  .cal-cell {
+    aspect-ratio: 1; background: none; border: none; border-radius: 8px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text); font-size: 13px; font-family: inherit;
+  }
+  .cal-cell.today { border: 1.5px solid var(--credit); }
+  .cal-cell.selected { background: #1C242F; }
+  .cal-cell-num { font-weight: 500; }
+  .cal-dots { display: flex; gap: 2px; height: 6px; }
+  .cal-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .cal-legend { display: flex; gap: 16px; padding: 6px 2px 10px; font-size: 11.5px; color: var(--text-dim); }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .selected-date-header { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--text); padding: 10px 0 8px; }
+  .empty-day-text { color: var(--text-dim); font-size: 13px; padding-bottom: 12px; }
+
+  svg { display: block; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-top-row">
+        <div class="hero-brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="16" y1="18" x2="16" y2="18"/></svg>
+          <span class="hero-brand-text">HISOBCHI</span>
+        </div>
+        <span id="savingDot" class="saving-dot">saqlanmoqda…</span>
+      </div>
+      <div class="hero-label">Umumiy balans</div>
+      <button class="display-screen" id="balanceDisplay">
+        <div class="display-top-row">
+          <div class="display-number" id="displayNumber">0<span class="display-currency"> so'm</span></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-dim)"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </div>
+        <div class="display-sub" id="displaySub">Hisoblar teng</div>
+      </button>
+      <div class="hero-stats-row">
+        <div class="hero-stat">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          <span class="hero-stat-label">Berdim</span>
+          <span class="hero-stat-value" id="totalGave" style="color:var(--credit)">0</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+          <span class="hero-stat-label">Oldim</span>
+          <span class="hero-stat-value" id="totalTook" style="color:var(--debit)">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabUmumiy" onclick="switchTab('umumiy')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Kimlar bilan
+      </button>
+      <button class="tab-btn" id="tabKalendar" onclick="switchTab('kalendar')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Kalendar
+      </button>
+    </div>
+
+    <div id="content"></div>
+  </div>
+
+  <button class="fab" id="fabAdd" aria-label="Yangi yozuv">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+  <!-- ADD TRANSACTION MODAL -->
+  <div class="modal-overlay hidden" id="addOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Yangi yozuv</span>
+        <button class="modal-close" onclick="closeAddForm()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="type-toggle">
+        <button class="type-btn active-credit" id="typeBerdim" onclick="setTxType('berdim')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          Men berdim
+        </button>
+        <button class="type-btn" id="typeOldim" onclick="setTxType('oldim')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+          Men oldim
+        </button>
+      </div>
+      <label class="form-label" id="personLabel">Kimga berdingiz?</label>
+      <input class="form-input" id="personInput" placeholder="Ism, masalan: Aziz aka" />
+      <label class="form-label">Summa (so'm)</label>
+      <input class="form-input" id="amountInput" placeholder="500 000" inputmode="numeric" />
+      <label class="form-label">Sana</label>
+      <input class="form-input" type="date" id="dateInput" />
+      <label class="form-label">Izoh (ixtiyoriy)</label>
+      <input class="form-input" id="noteInput" placeholder="masalan: to'y uchun" />
+      <div class="form-error" id="addError" style="display:none"></div>
+      <button class="submit-btn" onclick="submitTransaction()">Saqlash</button>
+    </div>
+  </div>
+
+  <!-- EDIT BALANCE MODAL -->
+  <div class="modal-overlay hidden" id="balanceOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Balansni sozlash</span>
+        <button class="modal-close" onclick="closeBalanceForm()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <p class="edit-balance-hint">Boshlang'ich balansni qo'lda kiriting. Keyinchalik "Men berdim" va "Men oldim" yozuvlari shu songa avtomatik qo'shiladi yoki ayiriladi.</p>
+      <label class="form-label">Umumiy balans (so'm)</label>
+      <input class="form-input" id="balanceInput" placeholder="0" inputmode="numeric" />
+      <div class="form-error" id="balanceError" style="display:none"></div>
+      <button class="submit-btn" onclick="submitBalance()">Saqlash</button>
+    </div>
+  </div>
+
+<script>
+  // ---------- Telegram init ----------
+  const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  // ---------- Storage layer: Telegram CloudStorage with in-memory fallback ----------
+  const memoryStore = {};
+  function cloudGet(key) {
+    return new Promise((resolve) => {
+      if (tg && tg.CloudStorage) {
+        tg.CloudStorage.getItem(key, (err, value) => resolve(err ? null : value));
+      } else {
+        resolve(memoryStore[key] || null);
+      }
+    });
+  }
+  function cloudSet(key, value) {
+    return new Promise((resolve) => {
+      if (tg && tg.CloudStorage) {
+        tg.CloudStorage.setItem(key, value, (err) => resolve(!err));
+      } else {
+        memoryStore[key] = value;
+        resolve(true);
+      }
+    });
+  }
+
+  const TX_KEY = 'hisobchi_transactions';
+  const BASE_KEY = 'hisobchi_base_balance';
+
+  // ---------- Uzbek locale ----------
+  const OY_NOMLARI = ["Yanvar","Fevral","Mart","Aprel","May","Iyun","Iyul","Avgust","Sentabr","Oktabr","Noyabr","Dekabr"];
+  const HAFTA_QISQA = ["Du","Se","Cho","Pa","Ju","Sha","Ya"];
+
+  function formatSum(n) {
+    const abs = Math.abs(Math.round(n));
+    return abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  }
+  function todayISO() {
+    const d = new Date();
+    const tz = d.getTimezoneOffset() * 60000;
+    return new Date(d - tz).toISOString().slice(0, 10);
+  }
+  function prettyDate(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    return `${d}-${OY_NOMLARI[m - 1]}, ${y}`;
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---------- State ----------
+  let transactions = [];
+  let baseBalance = 0;
+  let currentTab = 'umumiy';
+  let expandedPerson = null;
+  let txType = 'berdim';
+  let calCursor = (() => { const t = new Date(); return { year: t.getFullYear(), month: t.getMonth() }; })();
+  let selectedDate = null;
+
+  async function init() {
+    const [txRaw, baseRaw] = await Promise.all([cloudGet(TX_KEY), cloudGet(BASE_KEY)]);
+    transactions = txRaw ? JSON.parse(txRaw) : [];
+    baseBalance = baseRaw ? Number(JSON.parse(baseRaw)) || 0 : 0;
+    document.getElementById('content').innerHTML = '';
+    render();
+  }
+
+  function setSaving(on) {
+    document.getElementById('savingDot').classList.toggle('show', on);
+  }
+
+  async function persistTransactions() {
+    setSaving(true);
+    await cloudSet(TX_KEY, JSON.stringify(transactions));
+    setSaving(false);
+  }
+  async function persistBase() {
+    setSaving(true);
+    await cloudSet(BASE_KEY, JSON.stringify(baseBalance));
+    setSaving(false);
+  }
+
+  // ---------- Derived data ----------
+  function transactionsNet() {
+    return transactions.reduce((s, t) => s + (t.type === 'berdim' ? t.amount : -t.amount), 0);
+  }
+  function totalGaveAmt() {
+    return transactions.filter(t => t.type === 'berdim').reduce((s, t) => s + t.amount, 0);
+  }
+  function totalTookAmt() {
+    return transactions.filter(t => t.type === 'oldim').reduce((s, t) => s + t.amount, 0);
+  }
+  function overallNet() {
+    return baseBalance + transactionsNet();
+  }
+  function byPerson() {
+    const map = new Map();
+    for (const t of transactions) {
+      if (!map.has(t.person)) map.set(t.person, []);
+      map.get(t.person).push(t);
+    }
+    const arr = Array.from(map.entries()).map(([person, txs]) => {
+      const net = txs.reduce((s, t) => s + (t.type === 'berdim' ? t.amount : -t.amount), 0);
+      const lastDate = txs.reduce((a, t) => (t.date > a ? t.date : a), '0000-00-00');
+      txs.sort((a, b) => (a.date < b.date ? 1 : -1));
+      return { person, txs, net, lastDate };
+    });
+    arr.sort((a, b) => (a.lastDate < b.lastDate ? 1 : -1));
+    return arr;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    renderHero();
+    renderContent();
+  }
+
+  function renderHero() {
+    const net = overallNet();
+    const positive = net >= 0;
+    const numEl = document.getElementById('displayNumber');
+    const subEl = document.getElementById('displaySub');
+    numEl.style.color = net === 0 ? 'var(--screen-text)' : positive ? 'var(--credit)' : 'var(--debit)';
+    numEl.innerHTML = (net === 0 ? '' : positive ? '+' : '\u2212') + formatSum(net) + `<span class="display-currency"> so'm</span>`;
+    subEl.textContent = net === 0 ? "Hisoblar teng" : positive ? "Sizga qaytarilishi kerak" : "Siz qaytarishingiz kerak";
+    document.getElementById('totalGave').textContent = formatSum(totalGaveAmt());
+    document.getElementById('totalTook').textContent = formatSum(totalTookAmt());
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabUmumiy').classList.toggle('active', tab === 'umumiy');
+    document.getElementById('tabKalendar').classList.toggle('active', tab === 'kalendar');
+    renderContent();
+  }
+
+  function renderContent() {
+    const el = document.getElementById('content');
+    if (currentTab === 'umumiy') {
+      el.innerHTML = renderOverview();
+    } else {
+      selectedDate = null;
+      el.innerHTML = renderCalendar();
+    }
+  }
+
+  function renderOverview() {
+    const people = byPerson();
+    if (people.length === 0) {
+      return `<div class="empty-state"><p class="empty-text">Hali yozuv yo'q. Pastdagi <b>+</b> tugma orqali kimdan pul olganingizni yoki kimga berganingizni kiriting.</p></div>`;
+    }
+    let rows = people.map(p => renderPersonRow(p)).join('');
+    return `<div class="card">${rows}</div>`;
+  }
+
+  function renderPersonRow(p) {
+    const { person, net, txs } = p;
+    const positive = net >= 0;
+    const expanded = expandedPerson === person;
+    const netColor = net === 0 ? 'var(--text-dim)' : positive ? 'var(--credit)' : 'var(--debit)';
+    const subLabel = net === 0 ? "Hisob teng" : positive ? "Sizdan qarzdor" : "Sizga qarzdor bo'lgansiz";
+    const initial = person.trim().charAt(0).toUpperCase() || '?';
+    let txListHtml = '';
+    if (expanded) {
+      const items = txs.map(t => {
+        const iconSvg = t.type === 'berdim'
+          ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
+          : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
+        const amtColor = t.type === 'berdim' ? 'var(--credit)' : 'var(--debit)';
+        const label = t.type === 'berdim' ? 'Berdingiz' : 'Oldingiz';
+        const note = t.note ? ` <span class="tx-note">\u00B7 ${escapeHtml(t.note)}</span>` : '';
+        return `<div class="tx-item">
+          <div class="tx-icon-wrap">${iconSvg}</div>
+          <div style="flex:1">
+            <div class="tx-label">${label}${note}</div>
+            <div class="tx-date">${prettyDate(t.date)}</div>
+          </div>
+          <div class="tx-amount" style="color:${amtColor}">${formatSum(t.amount)}</div>
+          <button class="tx-delete" onclick="deleteTransaction('${t.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>`;
+      }).join('');
+      txListHtml = `<div class="tx-list">${items}</div>`;
+    }
+    return `<div class="person-row">
+      <button class="person-header" onclick="togglePerson('${escapeAttr(person)}')">
+        <div class="person-avatar">${initial}</div>
+        <div style="flex:1;text-align:left">
+          <div class="person-name">${escapeHtml(person)}</div>
+          <div class="person-sub">${subLabel}</div>
+        </div>
+        <div class="person-net" style="color:${netColor}">${net === 0 ? '' : (positive ? '+' : '\u2212') + ' '}${formatSum(net)}</div>
+      </button>
+      ${txListHtml}
+    </div>`;
+  }
+
+  function togglePerson(person) {
+    expandedPerson = expandedPerson === person ? null : person;
+    renderContent();
+  }
+
+  function deleteTransaction(id) {
+    transactions = transactions.filter(t => t.id !== id);
+    persistTransactions();
+    render();
+  }
+
+  // ---------- Calendar ----------
+  function renderCalendar() {
+    const { year, month } = calCursor;
+    const dayMap = new Map();
+    for (const t of transactions) {
+      if (!dayMap.has(t.date)) dayMap.set(t.date, []);
+      dayMap.get(t.date).push(t);
+    }
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = (firstOfMonth.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    let cells = '';
+    for (let i = 0; i < startWeekday; i++) cells += `<div></div>`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dayTxs = dayMap.get(iso) || [];
+      const gave = dayTxs.filter(t => t.type === 'berdim').reduce((s, t) => s + t.amount, 0);
+      const took = dayTxs.filter(t => t.type === 'oldim').reduce((s, t) => s + t.amount, 0);
+      const isToday = iso === todayISO();
+      const isSelected = iso === selectedDate;
+      let dots = '';
+      if (gave > 0) dots += `<span class="cal-dot" style="background:var(--credit)"></span>`;
+      if (took > 0) dots += `<span class="cal-dot" style="background:var(--debit)"></span>`;
+      cells += `<button class="cal-cell ${isToday ? 'today' : ''} ${isSelected ? 'selected' : ''}" onclick="selectDate('${iso}')">
+        <span class="cal-cell-num">${d}</span>
+        <span class="cal-dots">${dots}</span>
+      </button>`;
+    }
+    const weekHeader = HAFTA_QISQA.map(d => `<div class="cal-weekday">${d}</div>`).join('');
+
+    let selectedBlock = '';
+    if (selectedDate) {
+      const dayTxs = dayMap.get(selectedDate) || [];
+      let inner;
+      if (dayTxs.length === 0) {
+        inner = `<div class="empty-day-text">Bu kunda yozuv yo'q.</div>`;
+      } else {
+        const items = dayTxs.map(t => {
+          const iconSvg = t.type === 'berdim'
+            ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--credit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>`
+            : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--debit)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>`;
+          const amtColor = t.type === 'berdim' ? 'var(--credit)' : 'var(--debit)';
+          const label = t.type === 'berdim' ? `${escapeHtml(t.person)}ga berdingiz` : `${escapeHtml(t.person)}dan oldingiz`;
+          const note = t.note ? ` <span class="tx-note">\u00B7 ${escapeHtml(t.note)}</span>` : '';
+          return `<div class="tx-item">
+            <div class="tx-icon-wrap">${iconSvg}</div>
+            <div style="flex:1"><div class="tx-label">${label}${note}</div></div>
+            <div class="tx-amount" style="color:${amtColor}">${formatSum(t.amount)}</div>
+            <button class="tx-delete" onclick="deleteTransaction('${t.id}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>`;
+        }).join('');
+        inner = `<div class="tx-list" style="padding-left:0">${items}</div>`;
+      }
+      selectedBlock = `<div class="card" style="margin-top:12px">
+        <div class="selected-date-header">${prettyDate(selectedDate)}</div>
+        ${inner}
+      </div>`;
+    }
+
+    return `<div class="card">
+      <div class="cal-header">
+        <button class="cal-nav-btn" onclick="goMonth(-1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="cal-month-label">${OY_NOMLARI[month]} ${year}</div>
+        <button class="cal-nav-btn" onclick="goMonth(1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="cal-week-row">${weekHeader}</div>
+      <div class="cal-grid">${cells}</div>
+      <div class="cal-legend">
+        <span class="legend-item"><span class="cal-dot" style="background:var(--credit)"></span> Bergan kun</span>
+        <span class="legend-item"><span class="cal-dot" style="background:var(--debit)"></span> Olgan kun</span>
+      </div>
+    </div>${selectedBlock}`;
+  }
+
+  function goMonth(delta) {
+    selectedDate = null;
+    let m = calCursor.month + delta;
+    let y = calCursor.year;
+    if (m < 0) { m = 11; y -= 1; }
+    if (m > 11) { m = 0; y += 1; }
+    calCursor = { year: y, month: m };
+    renderContent();
+  }
+  function selectDate(iso) {
+    selectedDate = selectedDate === iso ? null : iso;
+    renderContent();
+  }
+
+  // ---------- Add transaction form ----------
+  function openAddForm() {
+    txType = 'berdim';
+    setTxType('berdim');
+    document.getElementById('personInput').value = '';
+    document.getElementById('amountInput').value = '';
+    document.getElementById('dateInput').value = todayISO();
+    document.getElementById('noteInput').value = '';
+    document.getElementById('addError').style.display = 'none';
+    document.getElementById('addOverlay').classList.remove('hidden');
+  }
+  function closeAddForm() {
+    document.getElementById('addOverlay').classList.add('hidden');
+  }
+  function setTxType(type) {
+    txType = type;
+    document.getElementById('typeBerdim').classList.toggle('active-credit', type === 'berdim');
+    document.getElementById('typeOldim').classList.toggle('active-debit', type === 'oldim');
+    document.getElementById('personLabel').textContent = type === 'berdim' ? 'Kimga berdingiz?' : 'Kimdan oldingiz?';
+  }
+  async function submitTransaction() {
+    const person = document.getElementById('personInput').value.trim();
+    const amountRaw = document.getElementById('amountInput').value.replace(/\s/g, '');
+    const date = document.getElementById('dateInput').value;
+    const note = document.getElementById('noteInput').value.trim();
+    const errEl = document.getElementById('addError');
+    const num = Number(amountRaw);
+    if (!person) { errEl.textContent = 'Ism kiriting.'; errEl.style.display = 'block'; return; }
+    if (!num || num <= 0) { errEl.textContent = "To'g'ri summa kiriting."; errEl.style.display = 'block'; return; }
+    if (!date) { errEl.textContent = 'Sanani tanlang.'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    transactions.push({ id: uid(), type: txType, person, amount: num, date, note });
+    await persistTransactions();
+    closeAddForm();
+    render();
+  }
+
+  // ---------- Edit balance form ----------
+  function openBalanceForm() {
+    const cur = overallNet();
+    document.getElementById('balanceInput').value = cur === 0 ? '' : String(Math.round(cur));
+    document.getElementById('balanceError').style.display = 'none';
+    document.getElementById('balanceOverlay').classList.remove('hidden');
+  }
+  function closeBalanceForm() {
+    document.getElementById('balanceOverlay').classList.add('hidden');
+  }
+  async function submitBalance() {
+    const raw = document.getElementById('balanceInput').value.replace(/\s/g, '').replace(',', '.');
+    const errEl = document.getElementById('balanceError');
+    const num = raw === '' ? 0 : Number(raw);
+    if (Number.isNaN(num)) { errEl.textContent = "To'g'ri son kiriting."; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    baseBalance = num - transactionsNet();
+    await persistBase();
+    closeBalanceForm();
+    render();
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function escapeAttr(s) { return s.replace(/'/g, "\\'"); }
+
+  document.getElementById('balanceDisplay').addEventListener('click', openBalanceForm);
+  document.getElementById('fabAdd').addEventListener('click', openAddForm);
+  document.getElementById('addOverlay').addEventListener('click', (e) => { if (e.target.id === 'addOverlay') closeAddForm(); });
+  document.getElementById('balanceOverlay').addEventListener('click', (e) => { if (e.target.id === 'balanceOverlay') closeBalanceForm(); });
+
+  init();
+</script>
+</body>
+</html>
